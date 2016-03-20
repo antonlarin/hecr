@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <chrono>
 #include <cmath>
@@ -14,7 +15,7 @@ class TridiagonalMatrix
 public:
     TridiagonalMatrix(const vec& as, const vec& bs, const vec& cs):
         as(as), bs(bs), cs(cs), size(as.size()) {}
-private:
+
     vec as;
     vec bs;
     vec cs;
@@ -39,19 +40,24 @@ TridiagonalMatrix construct_matrix(int nx, int nt)
     int size = compute_linear_system_size(nx);
 
     vec as(size, 1.0);
-    vec bs_cs(size - 1, 0.0);
+    vec bs(size, 0.0);
+    vec cs(size, 0.0);
 
     double a = - nt / T - 2 * nx * nx / X / X;
     double b_and_c = nx * nx / X / X;
 
-    for (int i = 0; i < nx - 2; i++)
+    as[0] = a;
+    cs[0] = b_and_c;
+    for (int i = 1; i < nx - 2; i++)
     {
         as[i] = a;
-        bs_cs[i] = b_and_c;
+        bs[i] = b_and_c;
+        cs[i] = b_and_c;
     }
     as[nx - 1] = a;
+    bs[nx - 1] = b_and_c;
 
-    return TridiagonalMatrix(as, bs_cs, bs_cs);
+    return TridiagonalMatrix(as, bs, cs);
 }
 
 vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
@@ -75,10 +81,69 @@ vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
     return rhs;
 }
 
-vec cyclic_reduction(const TridiagonalMatrix& /*a*/, const vec& /*b*/)
+vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 {
-    // TODO replace with an algorithm
-    return vec(1000, 0.0);
+    vec old_a = m.as;
+    vec old_b = m.bs;
+    vec old_c = m.cs;
+    vec old_rhs = b;
+    int equation_count = m.size;
+
+    while (equation_count > 1)
+    {
+        equation_count /= 2;
+        vec new_a(equation_count, 0.0);
+        vec new_b(equation_count, 0.0);
+        vec new_c(equation_count, 0.0);
+        vec new_rhs(equation_count, 0.0);
+
+        for (int i = 0; i < equation_count; i++)
+        {
+            int old_i = 2 * i + 1;
+            new_a[i] = old_a[old_i] -
+                old_b[old_i] * old_c[old_i - 1] / old_a[old_i - 1] -
+                old_c[old_i] * old_b[old_i + 1] / old_a[old_i + 1];
+            new_b[i] = -old_b[old_i - 1] * old_b[old_i] / old_a[old_i - 1];
+            new_c[i] = -old_c[old_i] * old_c[old_i + 1] / old_a[old_i + 1];
+            new_rhs[i] = old_rhs[old_i] -
+                old_rhs[old_i - 1] * old_b[old_i] / old_a[old_i - 1] -
+                old_rhs[old_i + 1] * old_c[old_i] / old_a[old_i + 1];
+        }
+
+        old_a = new_a;
+        old_b = new_b;
+        old_c = new_c;
+        old_rhs = new_rhs;
+    }
+
+    // result is padded with one zero one both sides to emulate
+    // implicit variables x_0 and x_N
+    vec result(m.size + 2, 0.0);
+    int fuv = m.size / 2; // fuv = first updated var
+    int stride = (fuv + 1) * 2;
+    result[fuv + 1] = old_rhs[0] / old_a[0];
+
+    while (equation_count < m.size)
+    {
+        fuv /= 2;
+        stride /= 2;
+        int halfstride = stride / 2;
+
+        for (unsigned int i = fuv; i < result.size(); i += stride)
+        {
+            result[i + 1] =
+                (b[i] - m.bs[i] * result[i - halfstride + 1] -
+                 m.cs[i] * result[i + halfstride + 1]) / m.as[i];
+        }
+
+        equation_count = equation_count * 2 + 1;
+    }
+
+    // drop the padding
+    result.pop_back();
+    result.erase(result.begin());
+
+    return result;
 }
 
 double exact_solution(double x, double t)
@@ -96,7 +161,7 @@ double compute_error(const vec& last_layer, int nx)
     double max_error = 0.0;
     double h = X / nx;
 
-    for (int i = 0; i <= nx; i++)
+    for (int i = 0; i < nx - 1; i++)
     {
         double current_error =
             std::abs(last_layer[i] - exact_solution(h * i, 1.0));
@@ -120,14 +185,14 @@ double solve_problem(int nx, int nt)
         initial_conditions.push_back(exact_solution(h * (i + 1), 0.0));
     }
 
-    TridiagonalMatrix a = construct_matrix(nx, nt);
+    TridiagonalMatrix m = construct_matrix(nx, nt);
     int size = compute_linear_system_size(nx);
     vec current_layer(size, 0.0);
     for (int i = 1; i <= nt; i++)
     {
         vec b = construct_rhs(nx, nt, current_layer, i * tau,
                 f, exact_solution);
-        current_layer = cyclic_reduction(a, b);
+        current_layer = cyclic_reduction(m, b);
     }
 
     double error = compute_error(current_layer, nx);
