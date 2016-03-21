@@ -54,8 +54,8 @@ TridiagonalMatrix construct_matrix(int nx, int nt)
         bs[i] = b_and_c;
         cs[i] = b_and_c;
     }
-    as[nx - 1] = a;
-    bs[nx - 1] = b_and_c;
+    as[nx - 2] = a;
+    bs[nx - 2] = b_and_c;
 
     return TridiagonalMatrix(as, bs, cs);
 }
@@ -109,6 +109,31 @@ vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
                 old_rhs[old_i - 1] * old_b[old_i] / old_a[old_i - 1] -
                 old_rhs[old_i + 1] * old_c[old_i] / old_a[old_i + 1];
         }
+        std::cout << "eq_count=" << equation_count << std::endl;
+        std::cout << "as = [";
+        for (int i = 0; i < equation_count; i++)
+        {
+            std::cout << new_a[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
+        std::cout << "bs = [";
+        for (int i = 0; i < equation_count; i++)
+        {
+            std::cout << new_b[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
+        std::cout << "cs = [";
+        for (int i = 0; i < equation_count; i++)
+        {
+            std::cout << new_c[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
+        std::cout << "rhs = [";
+        for (int i = 0; i < equation_count; i++)
+        {
+            std::cout << new_rhs[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
 
         old_a = new_a;
         old_b = new_b;
@@ -122,6 +147,7 @@ vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
     int fuv = m.size / 2; // fuv = first updated var
     int stride = (fuv + 1) * 2;
     result[fuv + 1] = old_rhs[0] / old_a[0];
+    std::cout << "result[fuv]=" << result[fuv + 1] << std::endl;
 
     while (equation_count < m.size)
     {
@@ -137,6 +163,13 @@ vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
         }
 
         equation_count = equation_count * 2 + 1;
+        std::cout << "eq_count=" << equation_count << std::endl;
+        std::cout << "result = [";
+        for (unsigned int i = 0; i < result.size(); i++)
+        {
+            std::cout << result[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
     }
 
     // drop the padding
@@ -164,7 +197,7 @@ double compute_error(const vec& last_layer, int nx)
     for (int i = 0; i < nx - 1; i++)
     {
         double current_error =
-            std::abs(last_layer[i] - exact_solution(h * i, 1.0));
+            std::abs(last_layer[i] - exact_solution(h * (i + 1), T));
         if (current_error > max_error)
         {
             max_error = current_error;
@@ -176,23 +209,56 @@ double compute_error(const vec& last_layer, int nx)
 
 double solve_problem(int nx, int nt)
 {
-    vec initial_conditions;
+    int size = compute_linear_system_size(nx);
+    std::cout << "N=" << size << std::endl;
+    vec current_layer(size, 0.0);
     double h = X / nx;
     double tau = T / nt;
 
+    std::cout << "u0 = [";
     for (int i = 0; i < nx - 1; i++)
     {
-        initial_conditions.push_back(exact_solution(h * (i + 1), 0.0));
+        current_layer[i] = exact_solution(h * (i + 1), 0.0);
+        std::cout << current_layer[i] << ", ";
     }
+    std::cout << "\b\b]" << std::endl;
 
     TridiagonalMatrix m = construct_matrix(nx, nt);
-    int size = compute_linear_system_size(nx);
-    vec current_layer(size, 0.0);
+    std::cout << "as = [";
+    for (int i = 0; i < m.size; i++)
+    {
+        std::cout << m.as[i] << ", ";
+    }
+    std::cout << "\b\b]" << std::endl;
+    std::cout << "bs = [";
+    for (int i = 0; i < m.size; i++)
+    {
+        std::cout << m.bs[i] << ", ";
+    }
+    std::cout << "\b\b]" << std::endl;
+    std::cout << "cs = [";
+    for (int i = 0; i < m.size; i++)
+    {
+        std::cout << m.cs[i] << ", ";
+    }
+    std::cout << "\b\b]" << std::endl;
     for (int i = 1; i <= nt; i++)
     {
         vec b = construct_rhs(nx, nt, current_layer, i * tau,
                 f, exact_solution);
+        std::cout << "rhs = [";
+        for (unsigned int i = 0; i < b.size(); i++)
+        {
+            std::cout << b[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
         current_layer = cyclic_reduction(m, b);
+        std::cout << "last = [";
+        for (unsigned int i = 0; i < current_layer.size(); i++)
+        {
+            std::cout << current_layer[i] << ", ";
+        }
+        std::cout << "\b\b]" << std::endl;
     }
 
     double error = compute_error(current_layer, nx);
