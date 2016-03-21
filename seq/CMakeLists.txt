@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.1)
+project(hecr_seq)
+add_executable(hecr_seq main.cpp)
+set_property(TARGET hecr_seq PROPERTY CXX_STANDARD 11)
+set_property(TARGET hecr_seq PROPERTY CXX_STANDARD_REQUIRED ON)
