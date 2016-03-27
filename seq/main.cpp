@@ -22,22 +22,21 @@ public:
     int size;
 };
 
-// compute the size of the system suitable for the cyclic reduction method
-int compute_linear_system_size(int nx)
+int compute_linear_system_size(int actual_size)
 {
-    int size = 2;
-    while (size - 1 <= nx - 1)
+    int padded_size = 2;
+    while (padded_size - 1 < actual_size)
     {
-        size = size * 2;
+        padded_size *= 2;
     }
 
-    return size - 1;
+    return padded_size - 1;
 }
 
 
 TridiagonalMatrix construct_matrix(int nx, int nt)
 {
-    int size = compute_linear_system_size(nx);
+    int size = compute_linear_system_size(nx - 1);
 
     vec as(size, 1.0);
     vec bs(size, 0.0);
@@ -63,7 +62,7 @@ TridiagonalMatrix construct_matrix(int nx, int nt)
 vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
         function_2var f, function_2var u)
 {
-    static int size = compute_linear_system_size(nx);
+    static int size = compute_linear_system_size(nx - 1);
 
     vec rhs(size, 0.0);
 
@@ -83,10 +82,14 @@ vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
 
 vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 {
-    vec old_a = m.as;
-    vec old_b = m.bs;
-    vec old_c = m.cs;
-    vec old_rhs = b;
+    std::vector<vec > a_vecs;
+    a_vecs.push_back(m.as);
+    std::vector<vec > b_vecs;
+    b_vecs.push_back(m.bs);
+    std::vector<vec > c_vecs;
+    c_vecs.push_back(m.cs);
+    std::vector<vec > rhs_vecs;
+    rhs_vecs.push_back(b);
     int equation_count = m.size;
 
     while (equation_count > 1)
@@ -96,6 +99,10 @@ vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
         vec new_b(equation_count, 0.0);
         vec new_c(equation_count, 0.0);
         vec new_rhs(equation_count, 0.0);
+        vec& old_a = a_vecs.back();
+        vec& old_b = b_vecs.back();
+        vec& old_c = c_vecs.back();
+        vec& old_rhs = rhs_vecs.back();
 
         for (int i = 0; i < equation_count; i++)
         {
@@ -109,67 +116,45 @@ vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
                 old_rhs[old_i - 1] * old_b[old_i] / old_a[old_i - 1] -
                 old_rhs[old_i + 1] * old_c[old_i] / old_a[old_i + 1];
         }
-        std::cout << "eq_count=" << equation_count << std::endl;
-        std::cout << "as = [";
-        for (int i = 0; i < equation_count; i++)
-        {
-            std::cout << new_a[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
-        std::cout << "bs = [";
-        for (int i = 0; i < equation_count; i++)
-        {
-            std::cout << new_b[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
-        std::cout << "cs = [";
-        for (int i = 0; i < equation_count; i++)
-        {
-            std::cout << new_c[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
-        std::cout << "rhs = [";
-        for (int i = 0; i < equation_count; i++)
-        {
-            std::cout << new_rhs[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
 
-        old_a = new_a;
-        old_b = new_b;
-        old_c = new_c;
-        old_rhs = new_rhs;
+        a_vecs.push_back(new_a);
+        b_vecs.push_back(new_b);
+        c_vecs.push_back(new_c);
+        rhs_vecs.push_back(new_rhs);
     }
 
     // result is padded with one zero one both sides to emulate
     // implicit variables x_0 and x_N
     vec result(m.size + 2, 0.0);
-    int fuv = m.size / 2; // fuv = first updated var
-    int stride = (fuv + 1) * 2;
-    result[fuv + 1] = old_rhs[0] / old_a[0];
-    std::cout << "result[fuv]=" << result[fuv + 1] << std::endl;
-
-    while (equation_count < m.size)
+    // factor maps indices of equations in full system extended with x_0=0
+    // and x_N=0 onto indices of equations in reduced extended system
+    int factor = m.size / 2 + 1;
+    for (unsigned int i = a_vecs.size(); i-- > 0; )
     {
-        fuv /= 2;
-        stride /= 2;
-        int halfstride = stride / 2;
+        vec& as = a_vecs[i];
+        vec& bs = b_vecs[i];
+        vec& cs = c_vecs[i];
+        vec& rhs = rhs_vecs[i];
 
-        for (unsigned int i = fuv; i < result.size(); i += stride)
+        // j is an index of an equation in the reduced system extended with
+        // x_0=0 and x_N=0
+        for (int j = 1; j < equation_count + 1; j += 2)
         {
-            result[i + 1] =
-                (b[i] - m.bs[i] * result[i - halfstride + 1] -
-                 m.cs[i] * result[i + halfstride + 1]) / m.as[i];
+            // index in coefficents arrays is less by 1 since they don't
+            // include x_0=0 and x_N=0 equations
+            int coeff_j = j - 1;
+            // mapping j to the index in the full extended system
+            int result_j = j * factor;
+            int result_j_minus1 = result_j - factor;
+            int result_j_plus1 = result_j + factor;
+
+            result[result_j] =
+                (rhs[coeff_j] - bs[coeff_j] * result[result_j_minus1] -
+                 cs[coeff_j] * result[result_j_plus1]) / as[coeff_j];
         }
 
         equation_count = equation_count * 2 + 1;
-        std::cout << "eq_count=" << equation_count << std::endl;
-        std::cout << "result = [";
-        for (unsigned int i = 0; i < result.size(); i++)
-        {
-            std::cout << result[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
+        factor /= 2;
     }
 
     // drop the padding
@@ -209,56 +194,22 @@ double compute_error(const vec& last_layer, int nx)
 
 double solve_problem(int nx, int nt)
 {
-    int size = compute_linear_system_size(nx);
-    std::cout << "N=" << size << std::endl;
+    int size = compute_linear_system_size(nx - 1);
     vec current_layer(size, 0.0);
     double h = X / nx;
     double tau = T / nt;
 
-    std::cout << "u0 = [";
     for (int i = 0; i < nx - 1; i++)
     {
         current_layer[i] = exact_solution(h * (i + 1), 0.0);
-        std::cout << current_layer[i] << ", ";
     }
-    std::cout << "\b\b]" << std::endl;
 
     TridiagonalMatrix m = construct_matrix(nx, nt);
-    std::cout << "as = [";
-    for (int i = 0; i < m.size; i++)
-    {
-        std::cout << m.as[i] << ", ";
-    }
-    std::cout << "\b\b]" << std::endl;
-    std::cout << "bs = [";
-    for (int i = 0; i < m.size; i++)
-    {
-        std::cout << m.bs[i] << ", ";
-    }
-    std::cout << "\b\b]" << std::endl;
-    std::cout << "cs = [";
-    for (int i = 0; i < m.size; i++)
-    {
-        std::cout << m.cs[i] << ", ";
-    }
-    std::cout << "\b\b]" << std::endl;
     for (int i = 1; i <= nt; i++)
     {
         vec b = construct_rhs(nx, nt, current_layer, i * tau,
                 f, exact_solution);
-        std::cout << "rhs = [";
-        for (unsigned int i = 0; i < b.size(); i++)
-        {
-            std::cout << b[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
         current_layer = cyclic_reduction(m, b);
-        std::cout << "last = [";
-        for (unsigned int i = 0; i < current_layer.size(); i++)
-        {
-            std::cout << current_layer[i] << ", ";
-        }
-        std::cout << "\b\b]" << std::endl;
     }
 
     double error = compute_error(current_layer, nx);
