@@ -1,7 +1,7 @@
 #include <fstream>
 #include <chrono>
 
-#include "algorithms.hpp"
+#include "Solver.h"
 
 int main(int, char** argv)
 {
@@ -15,8 +15,10 @@ int main(int, char** argv)
     double nx, nt;
     input_file >> nx >> nt;
 
+	Solver solver;
+
     auto start_time = std::chrono::high_resolution_clock::now();
-    double error = solve_problem(nx, nt);
+	double error = solver.solve_problem(nx, nt);
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
 

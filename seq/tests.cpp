@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 
-#include "algorithms.hpp"
+#include "Solver.h"
 
 const double EPS = 1e-12;
 
@@ -123,6 +123,7 @@ TEST(HecrSequential, cyclicRedictionFullMatrix)
     vec solution = cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
+	Solver solver;
 }
 
 TEST(HecrSequential, cyclicReductionExtendedMatrix)
@@ -148,5 +149,6 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
     vec solution = cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
+	Solver solver;
 }
 
