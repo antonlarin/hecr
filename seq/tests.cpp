@@ -124,6 +124,7 @@ TEST(HecrSequential, cyclicRedictionFullMatrix)
 
     EXPECT_LT(max_diff(xs, solution), EPS);
 	Solver solver;
+	vec solution = solver.cyclic_reduction(m, rhs);
 }
 
 TEST(HecrSequential, cyclicReductionExtendedMatrix)
@@ -150,5 +151,6 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
 
     EXPECT_LT(max_diff(xs, solution), EPS);
 	Solver solver;
+	vec solution = solver.cyclic_reduction(m, rhs);
 }
 
