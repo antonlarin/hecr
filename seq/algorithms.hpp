@@ -1,5 +1,6 @@
-#ifndef __ALG_INCLUDED__   // if x.h hasn't been included yet...
+#ifndef __ALG_INCLUDED__   
 #define __ALG_INCLUDED__ 
+#include <cmath>
 #include <vector>
 
 typedef std::vector<double> vec;
