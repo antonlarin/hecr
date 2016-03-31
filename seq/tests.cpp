@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 
-#include "Solver.h"
+#include "solver.hpp"
 
 const double EPS = 1e-12;
 
@@ -92,6 +92,7 @@ TEST(HecrSequential, constructRhs)
 
 TEST(HecrSequential, cyclicReductionIdentityMatrix)
 {
+	Solver solver;
     int size = 15;
     vec diag(size, 1.0);
     vec subdiag(size, 0.0);
@@ -100,13 +101,14 @@ TEST(HecrSequential, cyclicReductionIdentityMatrix)
         -15.7, -5.8, -6.58, 0.11, 4.04, 5.02, 8.0 };
     vec rhs = make_vector(size, rhs_values);
 
-    vec solution = cyclic_reduction(m, rhs);
+	vec solution = solver.cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(rhs, solution), EPS);
 }
 
 TEST(HecrSequential, cyclicRedictionFullMatrix)
 {
+	Solver solver;
     int size = 7;
     const double as_values[] = { 3, 4, 3, 7, 5.5, -6, 4 };
     vec as = make_vector(size, as_values);
@@ -120,15 +122,14 @@ TEST(HecrSequential, cyclicRedictionFullMatrix)
     const double xs_values[] = { 1, 2, -1, 0, 2, -3, 4 };
     vec xs = make_vector(size, xs_values);
 
-    vec solution = cyclic_reduction(m, rhs);
+	vec solution = solver.cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
-	Solver solver;
-	vec solution = solver.cyclic_reduction(m, rhs);
 }
 
 TEST(HecrSequential, cyclicReductionExtendedMatrix)
 {
+	Solver solver;
     int size = 15;
     const double as_values[] = { 3, 4, 3, 7, 5.5, -6, 4, -1, 3,
         0, 0, 0, 0, 0, 0 };
@@ -147,10 +148,8 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
         0, 0, 0, 0, 0, 0 };
     vec xs = make_vector(size, xs_values);
 
-    vec solution = cyclic_reduction(m, rhs);
+    vec solution = solver.cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
-	Solver solver;
-	vec solution = solver.cyclic_reduction(m, rhs);
 }
 

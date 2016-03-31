@@ -1,4 +1,4 @@
-#include "Solver.h"
+#include "solver.hpp"
 
 vec Solver::cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 {

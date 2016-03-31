@@ -1,7 +1,7 @@
 #include <fstream>
 #include <chrono>
 
-#include "Solver.h"
+#include "solver.hpp"
 
 int main(int, char** argv)
 {
