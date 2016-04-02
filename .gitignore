@@ -30,4 +30,3 @@
 # Project-specific ignores
 build/
 *.swp
-*.txt
