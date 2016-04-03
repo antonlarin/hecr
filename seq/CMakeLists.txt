@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 project(hecr_seq)
-add_executable(hecr_seq main.cpp algorithms.cpp)
+add_executable(hecr_seq main.cpp algorithms.cpp solver.cpp)
 target_compile_features(hecr_seq PRIVATE cxx_auto_type)
 
 # Testing support
@@ -13,6 +13,6 @@ elseif(APPLE)
 endif()
 
 include_directories(SYSTEM ${GTEST_DIR}/include ${GTEST_DIR})
-add_executable(hecr_seq_tests tests.cpp algorithms.cpp)
+add_executable(hecr_seq_tests tests.cpp algorithms.cpp solver.cpp)
 target_link_libraries(hecr_seq_tests gtest_main)
 
