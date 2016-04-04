@@ -12,7 +12,7 @@ int main(int, char** argv)
     std::string timing_file_name(argv[3]);
 
     std::fstream input_file(input_file_name, std::ios::in);
-    double nx, nt;
+    int nx, nt;
     input_file >> nx >> nt;
 
 	Solver solver;

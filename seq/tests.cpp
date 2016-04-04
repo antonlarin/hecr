@@ -132,7 +132,7 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
 	Solver solver;
     int size = 15;
     const double as_values[] = { 3, 4, 3, 7, 5.5, -6, 4, -1, 3,
-        0, 0, 0, 0, 0, 0 };
+        1, 1, 1, 1, 1, 1 };
     vec as = make_vector(size, as_values);
     const double bs_values[] = { 0, -1, 2, 1.1, 3.2, 2, 1, -0.3, -2,
         0, 0, 0, 0, 0, 0 };
@@ -151,5 +151,31 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
     vec solution = solver.cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
+}
+
+TEST(HecrSequential, cyclicReductionNumericalSchemeLikeSystem)
+{
+	Solver solver;
+	int size = 15;
+	const double as_values[] = { 3, 3, 3, 3, 3, 3, 3, 3, 3,
+		3, 3, 1, 1, 1, 1 };
+	vec as = make_vector(size, as_values);
+	const double bs_values[] = { 0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+		1.5, 1.5, 0, 0, 0, 0 };
+	vec bs = make_vector(size, bs_values);
+	const double cs_values[] = { 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+		1.5, 0, 0, 0, 0, 0 };
+	vec cs = make_vector(size, cs_values);
+	TridiagonalMatrix m(as, bs, cs);
+	const double rhs_values[] = { 21, 13.5, -10.5, 9, 52.5, 51, 22.5, 9, -27,
+		-43.5, -1.5, 0, 0, 0, 0 };
+	vec rhs = make_vector(size, rhs_values);
+	const double xs_values[] = { 4, 6, -7, 1, 11, 12, -1, 5, -3,
+		-17, 8, 0, 0, 0, 0 };
+	vec xs = make_vector(size, xs_values);
+
+	vec solution = solver.cyclic_reduction(m, rhs);
+
+	EXPECT_LT(max_diff(xs, solution), EPS);
 }
 
