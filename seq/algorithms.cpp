@@ -20,8 +20,11 @@ TridiagonalMatrix construct_matrix(int nx, int nt)
     vec bs(size, 0.0);
     vec cs(size, 0.0);
 
-    double a = - nt / T - 2 * nx * nx / X / X;
-    double b_and_c = nx * nx / X / X;
+    double h = X / nx;
+    double tau = T / nt;
+
+    double a = - 1.0 / tau - 2.0 / (h * h);
+    double b_and_c = 1.0 / (h * h);
 
     as[0] = a;
     cs[0] = b_and_c;
