@@ -4,7 +4,7 @@
 
 #include "solver.hpp"
 
-const double EPS = 1e-12;
+const double EPS = 1e-15;
 
 double max_diff(const vec& a, const vec& b)
 {
@@ -40,12 +40,10 @@ TEST(HecrSequential, constructMatrix)
     int nx = 10;
     int nt = 10;
     int size = 15;
-    double h = X / nx;
-    double tau = T / nt;
-    double a = -1.0 / tau - 2.0 / h / h;
+    double a = -334.22778765548086862041428227;
     const double as_values[] = { a, a, a, a, a, a, a, a, a, 1, 1, 1, 1, 1, 1 };
     vec as = make_vector(size, as_values);
-    double bc = 1.0 / h / h;
+    double bc = 162.1138938277404343102071411;
     const double bs_values[] =
         { 0, bc, bc, bc, bc, bc, bc, bc, bc, 0, 0, 0, 0, 0, 0 };
     vec bs = make_vector(size, bs_values);
@@ -78,7 +76,7 @@ TEST(HecrSequential, constructRhs)
     int size = 15;
     vec prev_layer(size, -2.0);
     double t = 0.5;
-    double end = 19.0 - 6400.0 / M_PI / M_PI;
+    double end = -629.4555753109617372408285645;
     double mid = 19.0;
     const double expected_rhs_values[] =
         { end, mid, mid, mid, mid, mid, mid, mid, end, 0, 0, 0, 0, 0, 0 };
@@ -173,6 +171,52 @@ TEST(HecrSequential, cyclicReductionNumericalSchemeLikeSystem)
 	const double xs_values[] = { 4, 6, -7, 1, 11, 12, -1, 5, -3,
 		-17, 8, 0, 0, 0, 0 };
 	vec xs = make_vector(size, xs_values);
+
+	vec solution = solver.cyclic_reduction(m, rhs);
+
+	EXPECT_LT(max_diff(xs, solution), EPS);
+}
+
+TEST(HecrSequential, cyclicReductionLargeSystem)
+{
+	Solver solver;
+	int size = 65535;
+        int actual_size = 47000;
+        double a = 3.21;
+        double bc = 1.4;
+        double x = -0.7;
+        double rhs_middle = -4.207;
+        double rhs_end = -3.227;
+	vec as(size, 1.0);
+	vec bs(size, 0.0);
+	vec cs(size, 0.0);
+
+        as[0] = a;
+        cs[0] = bc;
+        for (int i = 1; i < actual_size - 1; i++)
+        {
+            as[i] = a;
+            bs[i] = bc;
+            cs[i] = bc;
+        }
+        as[actual_size - 1] = a;
+        bs[actual_size - 1] = bc;
+
+	TridiagonalMatrix m(as, bs, cs);
+
+	vec rhs(size, 0.0);
+        rhs[0] = rhs_end;
+        for (int i = 1; i < actual_size - 1; i++)
+        {
+            rhs[i] = rhs_middle;
+        }
+        rhs[actual_size - 1] = rhs_end;
+
+	vec xs(size, 0.0);
+        for (int i = 0; i < actual_size; i++)
+        {
+            xs[i] = x;
+        }
 
 	vec solution = solver.cyclic_reduction(m, rhs);
 
