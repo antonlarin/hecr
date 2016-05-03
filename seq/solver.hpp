@@ -1,8 +1,7 @@
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include "algorithms.hpp"
-//#include <cmath>
+#include <cmath>
 #include <vector>
+
+#include "algorithms.hpp"
 
 class Solver
 {
@@ -17,3 +16,4 @@ public:
 	vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b);
 	double solve_problem(int nx, int nt);
 };
+

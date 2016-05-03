@@ -108,3 +108,4 @@ double Solver::solve_problem(int nx, int nt)
 
 	return error;
 }
+
