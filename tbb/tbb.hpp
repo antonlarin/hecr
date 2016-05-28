@@ -12,4 +12,6 @@ void fcompnewcoef(vec* new_a, vec* new_b, vec* new_c, vec* new_rhs, vec* old_a, 
 
 void fcompresult(vec* as, vec* bs, vec* cs, vec* rhs, vec* result, int factor, int equation_count, int grainsize);
 
+void fcomprhs(vec* rhs, const vec* prev_layer, int nx, double h,
+        double tau, double t, function_2var f);
 #endif

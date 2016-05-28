@@ -93,7 +93,7 @@ double solve_problem(int nx, int nt)
 
 	TridiagonalMatrix m = construct_matrix(nx, nt);
 
-	tbb::task_scheduler_init init;
+	tbb::task_scheduler_init init(2);
 
 	std::chrono::duration<double> elapsed_time, elapsed_timeOnce;
 	std::fstream timing_file("timeReduct.txt", std::ios::out);
@@ -115,3 +115,22 @@ double solve_problem(int nx, int nt)
 
 	return error;
 }
+
+vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
+	function_2var f, function_2var u)
+{
+	static int size = compute_linear_system_size(nx - 1);
+
+	vec rhs(size, 0.0);
+
+	static double h = X / nx;
+	static double tau = T / nt;
+
+        fcomprhs(&rhs, &previous_layer, nx, h, tau, t, f);
+
+	rhs[0] -= u(0.0, t) / h / h;
+	rhs[nx - 2] -= u(X, t) / h / h;
+
+	return rhs;
+}
+

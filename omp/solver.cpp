@@ -154,7 +154,7 @@ vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
 	static double h = X / nx;
 	static double tau = T / nt;
 
-        #pragma omp parallel for if (nx > 127)
+        #pragma omp parallel for
 	for (int i = 0; i < nx - 1; i++)
 	{
 		rhs[i] = -previous_layer[i] / tau - f(h * (i + 1), t);

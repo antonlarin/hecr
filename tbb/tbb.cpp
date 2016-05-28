@@ -98,3 +98,16 @@ void fcompresult(vec* as, vec* bs, vec* cs, vec* rhs, vec* result, int factor, i
 		tbb::blocked_range<int>(1, equation_count, grainsize),
 		FFCompResultFunctor(as, bs, cs, rhs, result, factor));
 }
+
+void fcomprhs(vec* rhs, const vec* prev_layer, int nx, double h,
+        double tau, double t, function_2var f)
+{
+    tbb::parallel_for(tbb::blocked_range<int>(0, nx - 1),
+            [=](const tbb::blocked_range<int>& r) {
+                for (int i = r.begin(); i < r.end(); i++)
+                    (*rhs)[i] = -(*prev_layer)[i] / tau -
+                        f(h * (i + 1), t);
+            }
+    );
+}
+
