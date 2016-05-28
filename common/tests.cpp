@@ -82,7 +82,7 @@ TEST(HecrSequential, constructRhs)
         { end, mid, mid, mid, mid, mid, mid, mid, end, 0, 0, 0, 0, 0, 0 };
     vec expected_rhs = make_vector(size, expected_rhs_values);
 
-    vec rhs = construct_rhs(nx, nt, prev_layer, t, f_test, u_test);
+    vec rhs = Solver::construct_rhs(nx, nt, prev_layer, t, f_test, u_test);
 
     EXPECT_EQ(size, rhs.size());
     EXPECT_LT(max_diff(expected_rhs, rhs), EPS);

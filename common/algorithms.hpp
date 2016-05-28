@@ -23,8 +23,6 @@ public:
 
 int compute_linear_system_size(int actual_size);
 TridiagonalMatrix construct_matrix(int nx, int nt);
-vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
-        function_2var f, function_2var u);
 double exact_solution(double x, double t);
 double f(double x, double t);
 double compute_error(const vec& last_layer, int nx);
