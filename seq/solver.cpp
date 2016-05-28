@@ -1,3 +1,6 @@
+#include <fstream>
+#include <chrono>
+
 #include "solver.hpp"
 
 vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
@@ -119,3 +122,25 @@ double solve_problem(int nx, int nt)
 
 	return error;
 }
+
+vec construct_rhs(int nx, int nt, const vec& previous_layer, double t,
+	function_2var f, function_2var u)
+{
+	static int size = compute_linear_system_size(nx - 1);
+
+	vec rhs(size, 0.0);
+
+	static double h = X / nx;
+	static double tau = T / nt;
+
+	for (int i = 0; i < nx - 1; i++)
+	{
+		rhs[i] = -previous_layer[i] / tau - f(h * (i + 1), t);
+	}
+
+	rhs[0] -= u(0.0, t) / h / h;
+	rhs[nx - 2] -= u(X, t) / h / h;
+
+	return rhs;
+}
+

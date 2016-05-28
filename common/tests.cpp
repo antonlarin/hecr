@@ -1,8 +1,6 @@
-#include <cmath>
-
 #include "gtest/gtest.h"
 
-#include "algorithms.hpp"
+#include "solver.hpp"
 
 const double EPS = 1e-12;
 
@@ -217,3 +215,4 @@ TEST(HecrSequential, cyclicReductionLargeSystem)
 
 	EXPECT_LT(max_diff(xs, solution), EPS);
 }
+
