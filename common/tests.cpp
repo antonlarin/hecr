@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "gtest/gtest.h"
 
 #include "solver.hpp"
@@ -82,7 +80,7 @@ TEST(HecrSequential, constructRhs)
         { end, mid, mid, mid, mid, mid, mid, mid, end, 0, 0, 0, 0, 0, 0 };
     vec expected_rhs = make_vector(size, expected_rhs_values);
 
-    vec rhs = Solver::construct_rhs(nx, nt, prev_layer, t, f_test, u_test);
+    vec rhs = construct_rhs(nx, nt, prev_layer, t, f_test, u_test);
 
     EXPECT_EQ(size, rhs.size());
     EXPECT_LT(max_diff(expected_rhs, rhs), EPS);
@@ -90,7 +88,6 @@ TEST(HecrSequential, constructRhs)
 
 TEST(HecrSequential, cyclicReductionIdentityMatrix)
 {
-	Solver solver;
     int size = 15;
     vec diag(size, 1.0);
     vec subdiag(size, 0.0);
@@ -99,14 +96,13 @@ TEST(HecrSequential, cyclicReductionIdentityMatrix)
         -15.7, -5.8, -6.58, 0.11, 4.04, 5.02, 8.0 };
     vec rhs = make_vector(size, rhs_values);
 
-	vec solution = solver.cyclic_reduction(m, rhs);
+    vec solution = cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(rhs, solution), EPS);
 }
 
 TEST(HecrSequential, cyclicRedictionFullMatrix)
 {
-	Solver solver;
     int size = 7;
     const double as_values[] = { 3, 4, 3, 7, 5.5, -6, 4 };
     vec as = make_vector(size, as_values);
@@ -120,14 +116,13 @@ TEST(HecrSequential, cyclicRedictionFullMatrix)
     const double xs_values[] = { 1, 2, -1, 0, 2, -3, 4 };
     vec xs = make_vector(size, xs_values);
 
-	vec solution = solver.cyclic_reduction(m, rhs);
+    vec solution = cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
 }
 
 TEST(HecrSequential, cyclicReductionExtendedMatrix)
 {
-	Solver solver;
     int size = 15;
     const double as_values[] = { 3, 4, 3, 7, 5.5, -6, 4, -1, 3,
         1, 1, 1, 1, 1, 1 };
@@ -146,80 +141,78 @@ TEST(HecrSequential, cyclicReductionExtendedMatrix)
         0, 0, 0, 0, 0, 0 };
     vec xs = make_vector(size, xs_values);
 
-    vec solution = solver.cyclic_reduction(m, rhs);
+    vec solution = cyclic_reduction(m, rhs);
 
     EXPECT_LT(max_diff(xs, solution), EPS);
 }
 
 TEST(HecrSequential, cyclicReductionNumericalSchemeLikeSystem)
 {
-	Solver solver;
-	int size = 15;
-	const double as_values[] = { 3, 3, 3, 3, 3, 3, 3, 3, 3,
-		3, 3, 1, 1, 1, 1 };
-	vec as = make_vector(size, as_values);
-	const double bs_values[] = { 0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
-		1.5, 1.5, 0, 0, 0, 0 };
-	vec bs = make_vector(size, bs_values);
-	const double cs_values[] = { 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
-		1.5, 0, 0, 0, 0, 0 };
-	vec cs = make_vector(size, cs_values);
-	TridiagonalMatrix m(as, bs, cs);
-	const double rhs_values[] = { 21, 13.5, -10.5, 9, 52.5, 51, 22.5, 9, -27,
-		-43.5, -1.5, 0, 0, 0, 0 };
-	vec rhs = make_vector(size, rhs_values);
-	const double xs_values[] = { 4, 6, -7, 1, 11, 12, -1, 5, -3,
-		-17, 8, 0, 0, 0, 0 };
-	vec xs = make_vector(size, xs_values);
+    int size = 15;
+    const double as_values[] = { 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 1, 1, 1, 1 };
+    vec as = make_vector(size, as_values);
+    const double bs_values[] = { 0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+            1.5, 1.5, 0, 0, 0, 0 };
+    vec bs = make_vector(size, bs_values);
+    const double cs_values[] = { 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+            1.5, 0, 0, 0, 0, 0 };
+    vec cs = make_vector(size, cs_values);
+    TridiagonalMatrix m(as, bs, cs);
+    const double rhs_values[] = { 21, 13.5, -10.5, 9, 52.5, 51, 22.5, 9, -27,
+            -43.5, -1.5, 0, 0, 0, 0 };
+    vec rhs = make_vector(size, rhs_values);
+    const double xs_values[] = { 4, 6, -7, 1, 11, 12, -1, 5, -3,
+            -17, 8, 0, 0, 0, 0 };
+    vec xs = make_vector(size, xs_values);
 
-	vec solution = solver.cyclic_reduction(m, rhs);
+    vec solution = cyclic_reduction(m, rhs);
 
-	EXPECT_LT(max_diff(xs, solution), EPS);
+    EXPECT_LT(max_diff(xs, solution), EPS);
 }
 
 TEST(HecrSequential, cyclicReductionLargeSystem)
 {
-	Solver solver;
-	int size = 65535;
-        int actual_size = 47000;
-        double a = 3.21;
-        double bc = 1.4;
-        double x = -0.7;
-        double rhs_middle = -4.207;
-        double rhs_end = -3.227;
-	vec as(size, 1.0);
-	vec bs(size, 0.0);
-	vec cs(size, 0.0);
+    int size = 65535;
+    int actual_size = 47000;
+    double a = 3.21;
+    double bc = 1.4;
+    double x = -0.7;
+    double rhs_middle = -4.207;
+    double rhs_end = -3.227;
+    vec as(size, 1.0);
+    vec bs(size, 0.0);
+    vec cs(size, 0.0);
 
-        as[0] = a;
-        cs[0] = bc;
-        for (int i = 1; i < actual_size - 1; i++)
-        {
-            as[i] = a;
-            bs[i] = bc;
-            cs[i] = bc;
-        }
-        as[actual_size - 1] = a;
-        bs[actual_size - 1] = bc;
+    as[0] = a;
+    cs[0] = bc;
+    for (int i = 1; i < actual_size - 1; i++)
+    {
+        as[i] = a;
+        bs[i] = bc;
+        cs[i] = bc;
+    }
+    as[actual_size - 1] = a;
+    bs[actual_size - 1] = bc;
 
-	TridiagonalMatrix m(as, bs, cs);
+    TridiagonalMatrix m(as, bs, cs);
 
-	vec rhs(size, 0.0);
-        rhs[0] = rhs_end;
-        for (int i = 1; i < actual_size - 1; i++)
-        {
-            rhs[i] = rhs_middle;
-        }
-        rhs[actual_size - 1] = rhs_end;
+    vec rhs(size, 0.0);
+    rhs[0] = rhs_end;
+    for (int i = 1; i < actual_size - 1; i++)
+    {
+        rhs[i] = rhs_middle;
+    }
+    rhs[actual_size - 1] = rhs_end;
 
-	vec xs(size, 0.0);
-        for (int i = 0; i < actual_size; i++)
-        {
-            xs[i] = x;
-        }
+    vec xs(size, 0.0);
+    for (int i = 0; i < actual_size; i++)
+    {
+        xs[i] = x;
+    }
 
-	vec solution = solver.cyclic_reduction(m, rhs);
+    vec solution = cyclic_reduction(m, rhs);
 
-	EXPECT_LT(max_diff(xs, solution), EPS);
+    EXPECT_LT(max_diff(xs, solution), EPS);
 }
 

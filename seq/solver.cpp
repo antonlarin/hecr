@@ -1,6 +1,6 @@
 #include "solver.hpp"
 
-vec Solver::cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
+vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 {
 	std::vector<vec > a_vecs;
 	a_vecs.push_back(m.as);
@@ -84,7 +84,7 @@ vec Solver::cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 	return result;
 }
 
-double Solver::solve_problem(int nx, int nt)
+double solve_problem(int nx, int nt)
 {
 	int size = compute_linear_system_size(nx - 1);
 	vec current_layer(size, 0.0);
@@ -107,5 +107,26 @@ double Solver::solve_problem(int nx, int nt)
 	double error = compute_error(current_layer, nx);
 
 	return error;
+}
+
+vec construct_rhs(int nx, int nt, const vec& previous_layer,
+        double t, function_2var f, function_2var u)
+{
+    static int size = compute_linear_system_size(nx - 1);
+
+    vec rhs(size, 0.0);
+
+    static double h = X / nx;
+    static double tau = T / nt;
+
+    for (int i = 0; i < nx - 1; i++)
+    {
+        rhs[i] = -previous_layer[i] / tau - f(h * (i + 1), t);
+    }
+
+    rhs[0] -= u(0.0, t) / h / h;
+    rhs[nx - 2] -= u(X, t) / h / h;
+
+    return rhs;
 }
 

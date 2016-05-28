@@ -1,9 +1,9 @@
-#include "solver.hpp"
-
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 
-vec Solver::cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
+#include "solver.hpp"
+
+vec cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
 {
     int equation_count = m.size;
     int reductions_count = static_cast<int>(floor(log(equation_count) /
@@ -98,7 +98,7 @@ vec Solver::cyclic_reduction(const TridiagonalMatrix& m, const vec& b)
     return result;
 }
 
-double Solver::solve_problem(int nx, int nt)
+double solve_problem(int nx, int nt)
 {
     int size = compute_linear_system_size(nx - 1);
     vec current_layer(size, 0.0);
@@ -123,7 +123,7 @@ double Solver::solve_problem(int nx, int nt)
     return error;
 }
 
-vec Solver::construct_rhs(int nx, int nt, const vec& previous_layer,
+vec construct_rhs(int nx, int nt, const vec& previous_layer,
         double t, function_2var f, function_2var u)
 {
     static int size = compute_linear_system_size(nx - 1);
@@ -143,3 +143,4 @@ vec Solver::construct_rhs(int nx, int nt, const vec& previous_layer,
 
     return rhs;
 }
+

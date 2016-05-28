@@ -15,10 +15,8 @@ int main(int, char** argv)
     int nx, nt;
     input_file >> nx >> nt;
 
-	Solver solver;
-
     auto start_time = std::chrono::high_resolution_clock::now();
-	double error = solver.solve_problem(nx, nt);
+    double error = solve_problem(nx, nt);
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
 
