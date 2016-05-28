@@ -3,17 +3,17 @@
 class FFCompNewCoefFunctor
 {
 private:
-	vec* new_a;
-	vec* new_b;
-	vec* new_c;
-	vec* new_rhs;
-	vec* old_a;
-	vec* old_b; 
-	vec* old_c;
-	vec* old_rhs;
+	double* new_a;
+	double* new_b;
+	double* new_c;
+	double* new_rhs;
+	double* old_a;
+	double* old_b; 
+	double* old_c;
+	double* old_rhs;
 public:
-	FFCompNewCoefFunctor(vec* _new_a, vec* _new_b, vec* _new_c, vec* _new_rhs,
-		vec* _old_a, vec* _old_b, vec* _old_c, vec* _old_rhs) 
+	FFCompNewCoefFunctor(double* _new_a, double* _new_b, double* _new_c, double* _new_rhs,
+		double* _old_a, double* _old_b, double* _old_c, double* _old_rhs) 
 	{
 		new_a = _new_a;
 		new_b = _new_b;
@@ -31,20 +31,26 @@ public:
 		for (i = r.begin(); i < r.end(); i++)
 		{
 			int old_i = 2 * i + 1;
-			(*new_a)[i] = (*old_a)[old_i] -
-				(*old_b)[old_i] * (*old_c)[old_i - 1] / (*old_a)[old_i - 1] -
-				(*old_c)[old_i] * (*old_b)[old_i + 1] / (*old_a)[old_i + 1];
-			(*new_b)[i] = -(*old_b)[old_i - 1] * (*old_b)[old_i] / (*old_a)[old_i - 1];
-			(*new_c)[i] = -(*old_c)[old_i] * (*old_c)[old_i + 1] / (*old_a)[old_i + 1];
-			(*new_rhs)[i] = (*old_rhs)[old_i] -
-				(*old_rhs)[old_i - 1] * (*old_b)[old_i] / (*old_a)[old_i - 1] -
-				(*old_rhs)[old_i + 1] * (*old_c)[old_i] / (*old_a)[old_i + 1];
+			double oldA_next = old_a[old_i + 1];
+			double oldA_prev = old_a[old_i - 1];
+
+			double CA = old_c[old_i] / oldA_next;
+			double BA = old_b[old_i] / oldA_prev;
+
+			new_a[i] = old_a[old_i] -
+				BA * old_c[old_i - 1] -
+				CA * old_b[old_i + 1];
+			new_b[i] = -old_b[old_i - 1] * BA;
+			new_c[i] = -CA * old_c[old_i + 1];
+			new_rhs[i] = old_rhs[old_i] -
+				old_rhs[old_i - 1] * BA -
+				old_rhs[old_i + 1] * CA;
 		}
 	}
 };
 
-void fcompnewcoef(vec* _new_a, vec* _new_b, vec* _new_c, vec* _new_rhs,
-	vec* _old_a, vec* _old_b, vec* _old_c, vec* _old_rhs,
+void fcompnewcoef(double* _new_a, double* _new_b, double* _new_c, double* _new_rhs,
+	double* _old_a, double* _old_b, double* _old_c, double* _old_rhs,
 	int equation_count, int grainsize)
 {
 	tbb::parallel_for<tbb::blocked_range<int>, FFCompNewCoefFunctor>(
@@ -55,14 +61,14 @@ void fcompnewcoef(vec* _new_a, vec* _new_b, vec* _new_c, vec* _new_rhs,
 class FFCompResultFunctor
 {
 private:
-	vec* as;
-	vec* bs;
-	vec* cs;
-	vec* rhs;
+	double* as;
+	double* bs;
+	double* cs;
+	double* rhs;
 	vec* result;
 	int factor;
 public:
-	FFCompResultFunctor(vec* _as, vec* _bs, vec* _cs, vec* _rhs, vec* _result, int _factor)
+	FFCompResultFunctor(double* _as, double* _bs, double* _cs, double* _rhs, vec* _result, int _factor)
 	{
 		as = _as;
 		bs = _bs;
@@ -84,15 +90,15 @@ public:
 			int result_j = k * factor;
 			int result_j_minus1 = result_j - factor;
 			int result_j_plus1 = result_j + factor;
-		
+
 			(*result)[result_j] =
-				((*rhs)[coeff_j] - (*bs)[coeff_j] * (*result)[result_j_minus1] -
-				(*cs)[coeff_j] * (*result)[result_j_plus1]) / (*as)[coeff_j];
+				(rhs[coeff_j] - bs[coeff_j] * (*result)[result_j_minus1] -
+				cs[coeff_j] * (*result)[result_j_plus1]) / as[coeff_j];
 		}
 	}
 };
 
-void fcompresult(vec* as, vec* bs, vec* cs, vec* rhs, vec* result, int factor, int equation_count, int grainsize)
+void fcompresult(double* as, double* bs, double* cs, double* rhs, vec* result, int factor, int equation_count, int grainsize)
 {
 	tbb::parallel_for<tbb::blocked_range<int>, FFCompResultFunctor>(
 		tbb::blocked_range<int>(1, equation_count, grainsize),
