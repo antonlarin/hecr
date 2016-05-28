@@ -7,10 +7,10 @@
 #include "tbb/partitioner.h"
 #include "tbb/task_scheduler_init.h"
 
-void fcompnewcoef(vec* new_a, vec* new_b, vec* new_c, vec* new_rhs, vec* old_a, vec* old_b, vec* old_c, vec* old_rhs,
+void fcompnewcoef(double* new_a, double* new_b, double* new_c, double* new_rhs, double* old_a, double* old_b, double* old_c, double* old_rhs,
 	int equation_count, int grainsize);
 
-void fcompresult(vec* as, vec* bs, vec* cs, vec* rhs, vec* result, int factor, int equation_count, int grainsize);
+void fcompresult(double* as, double* bs, double* cs, double* rhs, vec* result, int factor, int equation_count, int grainsize);
 
 void fcomprhs(vec* rhs, const vec* prev_layer, int nx, double h,
         double tau, double t, function_2var f);
